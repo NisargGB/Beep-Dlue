@@ -1,0 +1,26 @@
+#pragma once
+#include "Move.h"
+#include <vector>
+
+using namespace std;
+
+class Board
+{
+public:
+	int n, m;
+	vector<vector<char>> config;
+	Board(int nin, int min);
+	Board();
+	vector<Move> validMoves();
+	bool positionIsValid(pair<int, int> pos);
+	bool checkEnemy(pair<int, int> targetPos);
+	bool checkSoldier(pair<int, int> targetPos);
+	bool checkTownhall(pair<int, int> targetPos);
+	bool checkGoal(pair<int, int> targetPos);
+	bool checkEmpty(pair<int,int> targetPos);
+	bool checkSoldierOrTownhall(pair<int, int> targetPos);
+	void printBoard();
+	bool isTerminal();
+	int utilityScore();
+	int heuristicScore();
+};
