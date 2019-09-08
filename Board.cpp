@@ -98,7 +98,7 @@ vector<Move> Board::validMoves()
 				}
 
 				//Retreat in 3 directions
-				if (checkEnemy({ i - 1,j - 1 }) || checkEnemy({ i - 1,j }) || checkEnemy({ i - 1,j + 1 }) || checkEnemy({ i,j - 1 }) || checkEnemy({ i,j + 1 }) || checkEnemy({ i + 1,j - 1 }) || checkEnemy({ i + 1,j }) || checkEnemy({ i + 1,j + 1 }))
+				if (checkEnemy({ i - 1,j - 1 }) || checkEnemy({ i - 1,j }) || checkEnemy({ i - 1,j + 1 }) || checkEnemy({ i,j - 1 }) || checkEnemy({ i,j + 1 }))
 				{
 					if (positionIsValid({ i + 2,j - 2 }) && !checkSoldierOrTownhall({ i + 2,j - 2 }))
 					{
@@ -325,6 +325,7 @@ void Board::printBoard()
 }
 
 
+//Checks if the game has ended
 bool Board::isTerminal()
 {
 	int townhallCount = 0;
@@ -344,13 +345,46 @@ bool Board::isTerminal()
 }
 
 
+//Returns the utility value of the end state
 int Board::utilityScore()
 {
-	return rand()%10;
+	int townhallCount = 0;
+	int goalCount = 0;
+	for(int i=0 ; i<m ; i++)
+	{
+		if(config[0][i] == 'G')
+			goalCount++;
+		if(config[7][i] == 'T')
+			townhallCount++;
+	}
+
+	return (townhallCount - goalCount)*10;
 }
 
 
+//Returns the heuristic goodness of the board configuration
 int Board::heuristicScore()
 {
-	return rand()%10;
+	int townhallCount = 0;
+	int goalCount = 0;
+	int enemyCount = 0;
+	int soldierCount = 0;
+
+	//Counting the pieces on the board
+	for(int i=0 ; i<n ; i++)
+	{
+		for(int j=0 ; j<m ; j++)
+		{
+			if(config[i][j] == 'G')
+				goalCount++;
+			if(config[i][j] == 'T')
+				townhallCount++;
+			if(config[i][j] == 'E')
+				enemyCount++;
+			if(config[i][j] == 'S')
+				soldierCount++;
+		}
+	}
+
+	return soldierCount - enemyCount + 10*(townhallCount - goalCount);
 }
