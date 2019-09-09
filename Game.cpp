@@ -29,10 +29,10 @@ void Game::start()
 		
 
 		//Making our move
-		vector<Move> list = board.validMoves();			//List of all possible moves
+		vector<Move> list = board.validMoves(true);			//List of all possible moves
 		
 		cerr << "Searching for optimal move\n";
-		pair<Move, int> optimalStep = alphaBetaMinimax(board, 1, true, -100, 100);		//The optimal move bu alpha-bta search
+		pair<Move, int> optimalStep = alphaBetaMinimax(board, 5, true, -100, 100);		//The optimal move from alpha-bta search
 		cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
 
 		makeMove(optimalStep.first, &board);		//Make the optimal move
@@ -109,17 +109,19 @@ Move Game::stringToMove(pair<int,int> src, pair<int,int> tgt, char nature, bool 
 
 pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int alpha, int beta)
 {
-	if(b.isTerminal())
+	// cerr << "I recieved this board\n";
+	// b.printBoard();
+	if(b.isTerminal(isMaximizing))
 	{
-		cerr << "Utility value: " << b.utilityScore() << endl;
+		// cerr << "Utility value: " << b.utilityScore() << endl;
 		return {Move({-1,-1}, {-1,-1}, 'x', true), b.utilityScore()};
 	}
 
 	if(depth == 0)
 	{
-		cerr << "End point " << endl;
-		b.printBoard();
-		cerr << "Heuristic value: " << b.heuristicScore() << endl << endl;
+		// cerr << "End point " << endl;
+		// b.printBoard();
+		// cerr << "Heuristic value: " << b.heuristicScore() << endl << endl;
 		return {Move({-1,-1}, {-1,-1}, 'x', true), b.heuristicScore()};
 	}
 
@@ -127,43 +129,52 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 	{
 		// cerr << "MAX node ----------- " << depth << endl << endl;
 		int maxScore = -100;
-		vector<Move> legalMoves = b.validMoves();
-		int optimalMoveIndex = -1;
+		vector<Move> legalMoves = b.validMoves(true);
+		// int optimalMoveIndex = -1;
+		vector<Move> optimalMoveList;
 		for(int i=0 ; i<legalMoves.size() ; i++)
 		{
-			Board tempBoard = board;
+			// cerr << "************************---------------************ Max Trying move: " << moveToString(legalMoves[i]) << endl;
+			Board tempBoard = b;
 			makeMove(legalMoves[i], &tempBoard);
-			// cerr << "Testing move: " << moveToString(m) << endl;
 			// tempBoard.printBoard();
 			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, false, alpha, beta);
+			if(tempScore.second > maxScore)
+				optimalMoveList = {};
 			maxScore = max(maxScore, tempScore.second);
 			if(maxScore == tempScore.second)
-				optimalMoveIndex = i;
+				optimalMoveList.push_back(legalMoves[i]);
 			alpha = max(alpha, maxScore);
 			if(alpha >= beta)
 				break;
 		}
 
-		return {legalMoves[optimalMoveIndex], maxScore};
+		return {optimalMoveList[rand() % optimalMoveList.size()], maxScore};
 	}
 	else
 	{
 		// cerr << "MIN at : " << depth << endl;
 		int minScore = 100;								//TODO set the max value bound
-		vector<Move> legalMoves = b.validMoves();
-		int optimalMoveIndex;
+		vector<Move> legalMoves = b.validMoves(false);
+		// int optimalMoveIndex;
+		vector<Move> optimalMoveList;
 		for(int i=0 ; i<legalMoves.size() ; i++)
 		{
-			Board tempBoard = board;
+			// cerr << "************************---------------************ Min Trying move: " << moveToString(legalMoves[i]) << endl;
+			Board tempBoard = b;
 			makeMove(legalMoves[i], &tempBoard);
 			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, true, alpha, beta);
+			if(tempScore.second < minScore)
+				optimalMoveList = {};
 			minScore = min(minScore, tempScore.second);
 			if(minScore == tempScore.second)
-				optimalMoveIndex = i;
+				optimalMoveList.push_back(legalMoves[i]);
 			beta = min(beta, minScore);
 			if(alpha >= beta)
 				break;
 		}
-		return {legalMoves[optimalMoveIndex], minScore};
+
+		// cerr << "Min node will play: " << moveToString(legalMoves[optimalMoveIndex]) << endl;
+		return {optimalMoveList[rand() % optimalMoveList.size()], minScore};
 	}
 }

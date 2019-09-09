@@ -70,9 +70,12 @@ Board::Board()
 
 
 
-vector<Move> Board::validMoves()
+vector<Move> Board::validMoves(bool side)
 {
 	vector<Move> movesList;
+
+	if(!side)
+		reverseBoard();
 
 	for (int i = 0; i < n; i++)
 	{
@@ -273,7 +276,46 @@ vector<Move> Board::validMoves()
 		}
 	}
 
+
+	if(!side)
+	{
+		reverseBoard();
+		vector<Move> opponentList;
+		for(int i=0 ; i<movesList.size() ; i++)
+		{
+			pair<int,int> newFrom = {n - movesList[i].from.first - 1, m - movesList[i].from.second - 1};
+			pair<int,int> newTo = {n - movesList[i].to.first - 1, m - movesList[i].to.second - 1};
+			Move move(newFrom, newTo, movesList[i].type, false);
+			opponentList.push_back(move);
+		}
+		return opponentList;
+	}
+
 	return movesList;
+}
+
+
+void Board::reverseBoard()
+{
+	vector<char> row(m, '-');
+	vector<vector<char>> newConfig(n, row);
+
+	for(int i=0 ; i<n ; i++)
+	{
+		for(int j=0 ; j<m ; j++)
+		{
+			if(config[i][j] == 'G')
+				newConfig[n-i-1][m-j-1] = 'T';
+			else if(config[i][j] == 'E')
+				newConfig[n-i-1][m-j-1] = 'S';
+			else if(config[i][j] == 'S')
+				newConfig[n-i-1][m-j-1] = 'E';
+			else if(config[i][j] == 'T')
+				newConfig[n-i-1][m-j-1] = 'G';
+		}
+	}
+
+	config = newConfig;
 }
 
 
@@ -312,6 +354,11 @@ bool Board::checkSoldierOrTownhall(pair<int, int> targetPos)
 	return positionIsValid(targetPos) && ((config[targetPos.first][targetPos.second] == 'S') || (config[targetPos.first][targetPos.second] == 'T'));
 }
 
+bool Board::checkEnemyOrGoal(pair<int, int> targetPos)
+{	
+	return positionIsValid(targetPos) && ((config[targetPos.first][targetPos.second] == 'E') || (config[targetPos.first][targetPos.second] == 'G'));
+}
+
 void Board::printBoard()
 {
 	for(int i=0 ; i<n ; i++)
@@ -326,7 +373,7 @@ void Board::printBoard()
 
 
 //Checks if the game has ended
-bool Board::isTerminal()
+bool Board::isTerminal(bool side)
 {
 	int townhallCount = 0;
 	int goalCount = 0;
@@ -341,7 +388,7 @@ bool Board::isTerminal()
 	if(townhallCount <= 2 || goalCount <= 2)
 		return true;
 
-	return (validMoves().size() == 0);
+	return (validMoves(side).size() == 0);
 }
 
 
