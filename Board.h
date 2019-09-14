@@ -11,6 +11,7 @@ public:
 	vector<vector<char>> config;
 	Board(int nin, int min);
 	Board();
+	// Board(int k);
 	vector<Move> validMoves(bool side);
 	void reverseBoard();
 	bool positionIsValid(pair<int, int> pos);
@@ -22,7 +23,9 @@ public:
 	bool checkSoldierOrTownhall(pair<int, int> targetPos);
 	bool checkEnemyOrGoal(pair<int, int> targetPos);
 	void printBoard();
+	pair<int,int> countEnemies();
 	bool isTerminal(bool side);
 	int utilityScore();
 	int heuristicScore();
+	tuple<int, int, int, int, int, int, int> cannonsAndSoldierAttacks(bool side);
 };

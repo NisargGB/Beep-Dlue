@@ -39,7 +39,6 @@ class Server:
                 while self.client_count < num_clients and (not self.CLOSE_NETWORK):
                         try:
                                 c,addr = s.accept()
-                                # print("Added client\n")
                         except:
                                 self.CLOSE_NETWORK = True
                         if(not self.CLOSE_NETWORK):

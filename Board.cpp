@@ -3,6 +3,7 @@
 #include "Move.h"
 #include <vector>
 #include <iostream>
+#include <tuple>
 
 using namespace std;
 
@@ -68,7 +69,25 @@ Board::Board()
 
 }
 
-
+// Board::Board(int k)
+// {
+// 	vector<char> vec0 = {'G','-','G','-','G','E','G','E'};
+// 	vector<char> vec1 = {'-','E','-','-','-','-','-','E'};
+// 	vector<char> vec2 = {'-','E','-','E','-','E','-','-'};
+// 	vector<char> vec3 = {'-','-','-','E','-','-','-','-'};
+// 	vector<char> vec4 = {'-','-','-','E','-','-','S','-'};
+// 	vector<char> vec5 = {'S','-','S','-','-','-','-','S'};
+// 	vector<char> vec6 = {'S','S','-','-','-','-','-','-'};
+// 	vector<char> vec7 = {'S','T','-','T','-','T','-','T'};
+// 	config.push_back(vec0);
+// 	config.push_back(vec1);
+// 	config.push_back(vec2);
+// 	config.push_back(vec3);
+// 	config.push_back(vec4);
+// 	config.push_back(vec5);
+// 	config.push_back(vec6);
+// 	config.push_back(vec7);
+// }
 
 vector<Move> Board::validMoves(bool side)
 {
@@ -121,12 +140,12 @@ vector<Move> Board::validMoves(bool side)
 				}
 
 				//Kill horizontal enemies
-				if (checkEnemy({ i,j - 1 }))
+				if (checkEnemyOrGoal({ i,j - 1 }))
 				{
 					Move newMove({ i,j }, { i,j - 1 }, 'a', true);
 					movesList.push_back(newMove);
 				}
-				if (checkEnemy({ i,j + 1 }))
+				if (checkEnemyOrGoal({ i,j + 1 }))
 				{
 					Move newMove({ i,j }, { i,j + 1 }, 'a', true);
 					movesList.push_back(newMove);
@@ -372,20 +391,44 @@ void Board::printBoard()
 }
 
 
+//Returns the number of soldiers, enemies
+pair<int,int> Board::countEnemies()
+{
+	int numSoldiers = 0;
+	int numEnemies = 0;
+	for(int i=0 ; i<n ; i++)
+	{
+		for(int j=0 ; j<m ; j++)
+		{
+			if(config[i][j]=='S')
+				numSoldiers++;
+			if(config[i][j]=='E')
+				numEnemies++;
+		}
+	}
+	return {numSoldiers, numEnemies};
+}
+
 //Checks if the game has ended
 bool Board::isTerminal(bool side)
 {
 	int townhallCount = 0;
 	int goalCount = 0;
-	for(int i=0 ; i<m ; i++)
+	int enemyCount = 0;
+	for(int i=0 ; i<n ; i++)
 	{
-		if(config[0][i] == 'G')
-			goalCount++;
-		if(config[7][i] == 'T')
-			townhallCount++;
+		for(int j=0 ; j<m ; j++)
+		{
+			if(config[i][j] == 'G')
+				goalCount++;
+			else if(config[i][j] == 'T')
+				townhallCount++;
+			else if(config[i][j] == 'E')
+				enemyCount++;
+		}
 	}
 
-	if(townhallCount <= 2 || goalCount <= 2)
+	if(townhallCount <= 2 || goalCount <= 2 || enemyCount == 0)
 		return true;
 
 	return (validMoves(side).size() == 0);
@@ -405,9 +448,221 @@ int Board::utilityScore()
 			townhallCount++;
 	}
 
-	return (townhallCount - goalCount)*10;
+	return (townhallCount - goalCount)*100;
 }
 
+//Returns the number of vertical, horizontal and diagonal cannons, and number of enemies under attack by cannons, soldiers and retreats
+tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool side)
+{
+	int vertCannons = 0, horizCannons = 0, diagCannons = 0, cannonAttack = 0, soldierAttackNormal = 0, soldierAttackRetreat = 0, cannonAttackingPosition = 0;
+	int goalScore = 5;		//checked that keeping it 10 results in more aggression
+	if(!side)
+		reverseBoard();
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			if (checkSoldier({ i,j }))
+			{
+				//Adance soldier forward in 3 directions
+				if (positionIsValid({ i - 1,j - 1 }) && !checkSoldierOrTownhall({ i - 1,j - 1 }))
+				{
+					if(checkEnemy({ i - 1,j - 1 }))
+						soldierAttackNormal++;
+					else if(checkGoal({ i - 1,j - 1 }))
+						soldierAttackNormal += goalScore;
+				}
+				if (positionIsValid({ i - 1,j }) && !checkSoldierOrTownhall({ i - 1,j }))
+				{
+					if(checkEnemy({ i - 1,j}))
+						soldierAttackNormal++;
+					else if(checkGoal({ i - 1,j }))
+						soldierAttackNormal += goalScore;
+				}
+				if (positionIsValid({ i - 1,j + 1 }) && !checkSoldierOrTownhall({ i - 1,j + 1 }))
+				{
+					if(checkEnemy({ i - 1,j + 1 }))
+						soldierAttackNormal++;
+					else if(checkGoal({ i - 1,j + 1 }))
+						soldierAttackNormal += goalScore;
+				}
+
+				//Retreat in 3 directions
+				if (checkEnemy({ i - 1,j - 1 }) || checkEnemy({ i - 1,j }) || checkEnemy({ i - 1,j + 1 }) || checkEnemy({ i,j - 1 }) || checkEnemy({ i,j + 1 }))
+				{
+					if (positionIsValid({ i + 2,j - 2 }) && !checkSoldierOrTownhall({ i + 2,j - 2 }))
+					{
+						if(checkEnemy({ i + 2,j - 2 }))
+							soldierAttackRetreat++;
+					}
+					if (positionIsValid({ i + 2,j }) && !checkSoldierOrTownhall({ i + 2,j }))
+					{
+						if(checkEnemy({ i + 2,j }))
+							soldierAttackRetreat++;
+					}
+					if (positionIsValid({ i + 2,j + 2 }) && !checkSoldierOrTownhall({ i + 2,j + 2 }))
+					{
+						if(checkEnemy({ i + 2,j + 2 }))
+							soldierAttackRetreat++;
+					}
+				}
+
+				//Kill horizontal enemies
+				if(checkEnemy({ i,j - 1 }))
+					soldierAttackNormal++;
+				else if(checkGoal({ i ,j - 1 }))
+					soldierAttackNormal += goalScore;
+				
+				if(checkEnemy({ i,j + 1 }))
+					soldierAttackNormal++;
+				else if(checkGoal({ i,j + 1 }))
+					soldierAttackNormal += goalScore;
+
+				//Check the 3 cannons possible with centre at [i,j]
+				//Horizontal cannon
+				if (checkSoldier({ i,j - 1 }) && checkSoldier({ i,j + 1 }))
+				{
+					horizCannons++;
+					if (positionIsValid({ i,j - 3 }) && !checkSoldierOrTownhall({ i,j - 3 }) && checkEmpty({ i,j - 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i ,j - 3 }))
+							cannonAttack++;
+					}
+					if (positionIsValid({ i,j - 4 }) && !checkSoldierOrTownhall({ i,j - 4 }) && checkEmpty({ i,j - 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i ,j - 4 }))
+							cannonAttack++;
+					}
+					if (positionIsValid({ i,j + 3 }) && !checkSoldierOrTownhall({ i,j + 3 }) && checkEmpty({ i,j + 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i ,j + 3 }))
+							cannonAttack++;
+					}
+					if (positionIsValid({ i,j + 4 }) && !checkSoldierOrTownhall({ i,j + 4 }) && checkEmpty({ i,j + 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i ,j + 4 }))
+							cannonAttack++;
+					}
+				}
+
+				//Vertical cannon
+				if (checkSoldier({ i - 1,j }) && checkSoldier({ i + 1,j }))
+				{
+					vertCannons++;
+					if (positionIsValid({ i - 3,j }) && !checkSoldierOrTownhall({ i - 3,j }) && checkEmpty({ i - 2,j }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i - 3,j }))
+							cannonAttack++;
+						else if(checkGoal({ i - 3,j }))
+							cannonAttack += goalScore;
+					}
+					if (positionIsValid({ i - 4,j }) && !checkSoldierOrTownhall({ i - 4,j }) && checkEmpty({ i - 2,j }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i - 4,j }))
+							cannonAttack++;
+						else if(checkGoal({ i - 4,j }))
+							cannonAttack += goalScore;
+					}
+					if (positionIsValid({ i + 3,j }) && !checkSoldierOrTownhall({ i + 3,j }) && checkEmpty({ i + 2,j }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i + 3,j }))
+							cannonAttack++;
+					}
+					if (positionIsValid({ i + 4,j }) && !checkSoldierOrTownhall({ i + 4,j }) && checkEmpty({ i + 2,j }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i + 4,j }))
+							cannonAttack++;
+					}
+				}
+
+				//Diagonal1 cannon
+				if (checkSoldier({ i - 1,j - 1 }) && checkSoldier({ i + 1,j + 1 }))
+				{
+					if(j == 3 || j == 4 || j == 5 || j == 6)
+						diagCannons++;
+					if (positionIsValid({ i - 3,j - 3 }) && !checkSoldierOrTownhall({ i - 3,j - 3 }) && checkEmpty({ i - 2,j - 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i - 3 ,j - 3 }))
+							cannonAttack++;
+						else if(checkGoal({ i - 3,j - 3}))
+							cannonAttack += goalScore;
+					}
+					if (positionIsValid({ i - 4,j - 4 }) && !checkSoldierOrTownhall({ i - 4,j - 4 }) && checkEmpty({ i - 2,j - 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i - 4,j - 4 }))
+							cannonAttack++;
+						else if(checkGoal({ i - 4,j - 4 }))
+							cannonAttack += goalScore;
+					}
+					if (positionIsValid({ i + 3,j + 3 }) && !checkSoldierOrTownhall({ i + 3,j + 3 }) && checkEmpty({ i + 2,j + 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i + 3,j + 3 }))
+							cannonAttack++;
+					}
+					if (positionIsValid({ i + 4,j + 4 }) && !checkSoldierOrTownhall({ i + 4,j + 4 }) && checkEmpty({ i + 2,j + 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i + 4,j + 4 }))
+							cannonAttack++;
+					}
+				}
+
+				//Diagonal2 cannon
+				if (checkSoldier({ i - 1,j + 1 }) && checkSoldier({ i + 1,j - 1 }))
+				{
+					if(j == 1 || j == 2 || j == 3 || j == 4)
+						diagCannons++;
+					if (positionIsValid({ i - 3,j + 3 }) && !checkSoldierOrTownhall({ i - 3,j + 3 }) && checkEmpty({ i - 2,j + 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i - 3,j + 3 }))
+							cannonAttack++;
+						else if(checkGoal({ i - 3,j + 3 }))
+							cannonAttack += goalScore;
+					}
+					if (positionIsValid({ i - 4,j + 4 }) && !checkSoldierOrTownhall({ i - 4,j + 4 }) && checkEmpty({ i - 2,j + 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i - 4,j + 4 }))
+							cannonAttack++;
+						else if(checkGoal({ i - 4,j + 4}))
+							cannonAttack += goalScore;
+					}
+					if (positionIsValid({ i + 3,j - 3 }) && !checkSoldierOrTownhall({ i + 3,j - 3 }) && checkEmpty({ i + 2,j - 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i + 3,j - 3 }))
+							cannonAttack++;
+					}
+					if (positionIsValid({ i + 4,j - 4 }) && !checkSoldierOrTownhall({ i + 4,j - 4 }) && checkEmpty({ i + 2,j - 2 }))
+					{
+						cannonAttackingPosition++;
+						if(checkEnemy({ i + 4 ,j + 4 }))
+							cannonAttack++;
+					}
+				}
+			}
+		}
+	}
+
+	if(!side)
+		reverseBoard();
+
+	return make_tuple(vertCannons, horizCannons, diagCannons, cannonAttack, soldierAttackNormal, soldierAttackRetreat, cannonAttackingPosition);
+
+}
 
 //Returns the heuristic goodness of the board configuration
 int Board::heuristicScore()
@@ -416,6 +671,7 @@ int Board::heuristicScore()
 	int goalCount = 0;
 	int enemyCount = 0;
 	int soldierCount = 0;
+	int vertCannons, horizCannons, diagCannons, cannonAttack, soldierAttackNormal, soldierAttackRetreat, cannonAttackingPosition;
 
 	//Counting the pieces on the board
 	for(int i=0 ; i<n ; i++)
@@ -427,11 +683,28 @@ int Board::heuristicScore()
 			if(config[i][j] == 'T')
 				townhallCount++;
 			if(config[i][j] == 'E')
-				enemyCount++;
+				enemyCount += 1;
 			if(config[i][j] == 'S')
-				soldierCount++;
+				soldierCount += 1;
 		}
 	}
 
-	return soldierCount - enemyCount + 10*(townhallCount - goalCount);
+	tuple<int, int, int, int, int, int, int> answerBlack = cannonsAndSoldierAttacks(true);
+	tuple<int, int, int, int, int, int, int> answerWhite = cannonsAndSoldierAttacks(false);
+	vertCannons = get<0>(answerBlack) - get<0>(answerWhite);
+	horizCannons =  get<1>(answerBlack) - get<1>(answerWhite);
+	diagCannons =  get<2>(answerBlack) - get<2>(answerWhite);
+	cannonAttack =  get<3>(answerBlack) - get<3>(answerWhite);
+	soldierAttackNormal = get<4>(answerBlack) - get<4>(answerWhite);
+	soldierAttackRetreat =  get<5>(answerBlack) - get<5>(answerWhite);
+	cannonAttackingPosition = get<6>(answerBlack) - get<6>(answerWhite);
+	//count the number of horizontal, vertical and diagonal cannons and adding as 6*vertical + 4*diagonal + 2*horizontal
+	
+	//count number of lethal cannon attacks and soldier lethal attacks during advance and soldier lethal attacks during retreat and adding as 3*cannon_attacks + 6*retreat_soldier_attacks + 1*advance_soldier_attacks
+	// cerr << vertCannons << horizCannons << diagCannons << cannonAttack << soldierAttackNormal << soldierAttackRetreat << endl;
+	//a1: return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat + 2*soldierAttackNormal + 100*(soldierCount - enemyCount) + 2000*(townhallCount - goalCount);
+	return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat + 2*soldierAttackNormal + 100*(soldierCount - enemyCount) + 50*soldierCount + 2000*(townhallCount - goalCount);
+	// return vertCannons + diagCannons + horizCannons + cannonAttack + soldierAttackRetreat + 100*(soldierCount - enemyCount) + 2000*(townhallCount - goalCount);
 }
+
+//before applying alpha beta we check if any townhall can be destroyed

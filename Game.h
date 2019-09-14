@@ -11,10 +11,11 @@ class Game
 {
 public:
 	int n, m;
+	int searchDepth = 3;
 	Board board;
 	void start();
 	Game(int nin, int min);
-	void makeMove(Move move, Board *boardIn);
+	pair<bool, bool> makeMove(Move move, Board *boardIn);
 	string moveToString(Move move);
 	Move stringToMove(pair<int, int> src, pair<int, int> tgt, char nature, bool polarity);
 	pair<Move,int> alphaBetaMinimax(Board b, int depth, bool isMaximizing, int alpha, int beta);

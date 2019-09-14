@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
-
+#include <tuple>
 using namespace std;
 
 
@@ -14,52 +14,112 @@ Game::Game(int nin, int min)
 	n = nin;
 	m = min;
 	Board newBoard(n, m);
+	// Board newBoard(n);
 	board = newBoard;
 }
 
 void Game::start()
 {
+	int player, nin, min, time;
+	cin >> player >> nin >> min >> time;
+	int plays = 0;
+
 	while (true)
 	{
-		char s, nature;
-		pair<int, int> src, tgt;
-		string input;
-		getline(cin,input);
-		cerr << input << endl;
+		pair<int,int> pieceCount = board.countEnemies();
+		if(pieceCount.second <= 6 || pieceCount.first <= 6)
+			searchDepth = 5;
+		if(pieceCount.second <= 4 || pieceCount.first <= 4)
+			searchDepth = 6;
+		if(pieceCount.second <= 3 || pieceCount.first <= 3)
+			searchDepth = 6;
 		
+		if(player == 1)
+		{
+			char s, nature;
+			pair<int, int> src, tgt;
 
-		//Making our move
-		vector<Move> list = board.validMoves(true);			//List of all possible moves
+			//Making our move
+			// vector<Move> list = board.validMoves(true);			//List of all possible moves
+			
+			cerr << "Searching for optimal move\n";
+			pair<Move, int> optimalStep = alphaBetaMinimax(board, searchDepth, true, -100000, 100000);		//The optimal move from alpha-bta search
+			cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
+
+			makeMove(optimalStep.first, &board);		//Make the optimal move
+			cout << moveToString(optimalStep.first) << endl;
+			board.printBoard();
+
+
+			//Opponent is making the move now
+			cin >> s >> src.first >> src.second >> nature >> tgt.first >> tgt.second;
+			// cerr << "This was read: " << s << " " << src.first << " " << src.second << " " << nature << " " << tgt.first << " " << tgt.second << endl;
+			Move move = stringToMove(src, tgt, nature, false);
+			// cerr << "Opponent's move: " << move.from.first << " " << move.from.second << " to " << move.to.first << " " << move.to.second << " " << move.type << endl; 
+			makeMove(move, &board);
+			board.printBoard();
+		}
+		else
+		{
+			char s, nature;
+			pair<int, int> src, tgt;
+
+			//Opponent is making the move now
+			cin >> s >> src.first >> src.second >> nature >> tgt.first >> tgt.second;
+			// cerr << "This was read: " << s << " " << src.first << " " << src.second << " " << nature << " " << tgt.first << " " << tgt.second << endl;
+			Move move = stringToMove(src, tgt, nature, true);
+			// cerr << "Opponent's move: " << move.from.first << " " << move.from.second << " to " << move.to.first << " " << move.to.second << " " << move.type << endl; 
+			makeMove(move, &board);
+			board.printBoard();
+
+			//Making our move
+			// vector<Move> list = board.validMoves(false);			//List of all possible moves
+			
+			cerr << "Searching for optimal move\n";
+			pair<Move, int> optimalStep = alphaBetaMinimax(board, searchDepth, false, -100000, 100000);		//The optimal move from alpha-bta search
+			cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
+
+			makeMove(optimalStep.first, &board);		//Make the optimal move
+			cout << moveToString(optimalStep.first) << endl;
+			board.printBoard();
+			
+		}
 		
-		cerr << "Searching for optimal move\n";
-		pair<Move, int> optimalStep = alphaBetaMinimax(board, 5, true, -100, 100);		//The optimal move from alpha-bta search
-		cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
-
-		makeMove(optimalStep.first, &board);		//Make the optimal move
-		cout << moveToString(optimalStep.first) << endl;
-		board.printBoard();
-
-
-		//Opponent is making the move now
-		cin >> s >> src.first >> src.second >> nature >> tgt.first >> tgt.second;
-		// cerr << "This was read: " << s << " " << src.first << " " << src.second << " " << nature << " " << tgt.first << " " << tgt.second << endl;
-		Move move = stringToMove(src, tgt, nature, false);
-		// cerr << "Opponent's move: " << move.from.first << " " << move.from.second << " to " << move.to.first << " " << move.to.second << " " << move.type << endl; 
-		makeMove(move, &board);
-		board.printBoard();
+		plays++;
 	}
 }
 
-void Game::makeMove(Move move, Board* boardIn)
+// Plays the move and returns if the move was lethal
+pair<bool, bool> Game::makeMove(Move move, Board* boardIn)
 {
-	char myChar;
-	if (move.polarity)
-		myChar = 'S';
-	else
-		myChar = 'E';
+	bool isLethalToGoal = false;
+	bool isLethalToTownhall = false;
 
+	char myChar;
+	char myGoal;
+	char myTownhall;
+	if (move.polarity)
+	{
+		myChar = 'S';
+		myGoal = 'G';
+		myTownhall = 'T';
+	}
+	else
+	{
+		myChar = 'E';
+		myGoal = 'T';
+		myTownhall = 'G';
+	}
 	if (move.type == 'f')		//firing cannon
 	{
+		if(boardIn->config[move.to.first][move.to.second] == myGoal)
+		{
+			isLethalToGoal = true;	
+		}
+		if(boardIn->config[move.to.first][move.to.second] == myTownhall)
+		{
+			isLethalToTownhall = true;
+		}
 		boardIn->config[move.to.first][move.to.second] = '-';
 	}
 	else if (move.type == 'c')	//moving cannon
@@ -71,9 +131,15 @@ void Game::makeMove(Move move, Board* boardIn)
 	}
 	else						//moving soldier
 	{
+		if(boardIn->config[move.to.first][move.to.second] == myGoal)
+			isLethalToGoal = true;
+		if(boardIn->config[move.to.first][move.to.second] == myTownhall)
+			isLethalToTownhall = true;
 		boardIn->config[move.from.first][move.from.second] = '-';
 		boardIn->config[move.to.first][move.to.second] = myChar;
 	}
+
+	return {isLethalToTownhall, isLethalToGoal};
 }
 
 
@@ -113,8 +179,8 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 	// b.printBoard();
 	if(b.isTerminal(isMaximizing))
 	{
-		// cerr << "Utility value: " << b.utilityScore() << endl;
-		return {Move({-1,-1}, {-1,-1}, 'x', true), b.utilityScore()};
+		// cerr << "Utility value: " << b.heuristicScore() << " at depth: " << depth << endl;
+		return {Move({-1,-1}, {-1,-1}, 'x', true), b.heuristicScore()};
 	}
 
 	if(depth == 0)
@@ -128,7 +194,7 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 	if(isMaximizing)
 	{
 		// cerr << "MAX node ----------- " << depth << endl << endl;
-		int maxScore = -100;
+		int maxScore = -100000;
 		vector<Move> legalMoves = b.validMoves(true);
 		// int optimalMoveIndex = -1;
 		vector<Move> optimalMoveList;
@@ -136,9 +202,21 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 		{
 			// cerr << "************************---------------************ Max Trying move: " << moveToString(legalMoves[i]) << endl;
 			Board tempBoard = b;
-			makeMove(legalMoves[i], &tempBoard);
+			pair<bool,bool> lethals;
+			lethals = (makeMove(legalMoves[i], &tempBoard));
+			bool isLethalToTownhall = lethals.first;
+			bool isLethalToGoal = lethals.second;
+
 			// tempBoard.printBoard();
+			if(depth >= searchDepth-1 && isLethalToGoal == true)
+			{
+				cerr << "///////////////////////// GOAL IN DANGER /////////////////////\n";
+				// pair<Move,int> anticipation = alphaBetaMinimax(tempBoard, 1, false, alpha, beta);
+				// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'T')
+					return {legalMoves[i], tempBoard.heuristicScore()};
+			}
 			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, false, alpha, beta);
+			
 			if(tempScore.second > maxScore)
 				optimalMoveList = {};
 			maxScore = max(maxScore, tempScore.second);
@@ -154,15 +232,27 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 	else
 	{
 		// cerr << "MIN at : " << depth << endl;
-		int minScore = 100;								//TODO set the max value bound
+		int minScore = 100000;								//TODO set the max value bound
 		vector<Move> legalMoves = b.validMoves(false);
-		// int optimalMoveIndex;
 		vector<Move> optimalMoveList;
 		for(int i=0 ; i<legalMoves.size() ; i++)
 		{
 			// cerr << "************************---------------************ Min Trying move: " << moveToString(legalMoves[i]) << endl;
 			Board tempBoard = b;
-			makeMove(legalMoves[i], &tempBoard);
+			pair<bool,bool> lethals;
+			lethals = (makeMove(legalMoves[i], &tempBoard));
+			bool isLethalToTownhall = lethals.first;
+			bool isLethalToGoal = lethals.second;
+			//makeMove(legalMoves[i], &tempBoard);
+
+			// cerr << "Move at depth: " << depth << " is "
+			if(depth >= searchDepth-1 && isLethalToGoal == true)
+			{
+				cerr << "///////////////////////// TOWNHALL IN DANGER /////////////////////\n";
+				// pair<Move,int> anticipation = alphaBetaMinimax(tempBoard, 1, true, alpha, beta);
+				// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'G')
+					return {legalMoves[i], tempBoard.heuristicScore()};
+			}
 			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, true, alpha, beta);
 			if(tempScore.second < minScore)
 				optimalMoveList = {};

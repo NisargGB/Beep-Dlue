@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "Game.h"
 #include <iostream>
+#include "Time.h"
 
 int main()
 {
