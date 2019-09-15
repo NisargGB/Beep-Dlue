@@ -27,5 +27,5 @@ public:
 	bool isTerminal(bool side);
 	int utilityScore();
 	int heuristicScore();
-	tuple<int, int, int, int, int, int, int> cannonsAndSoldierAttacks(bool side);
+	tuple<int, int, int, int, int, int, int, int, int, int, int> cannonsAndSoldierAttacks(bool side);
 };

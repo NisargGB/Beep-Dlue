@@ -27,9 +27,9 @@ void Game::start()
 	while (true)
 	{
 		pair<int,int> pieceCount = board.countEnemies();
-		if(pieceCount.second <= 6 || pieceCount.first <= 6)
+		if(pieceCount.second <= 8 || pieceCount.first <= 8)
 			searchDepth = 5;
-		if(pieceCount.second <= 4 || pieceCount.first <= 4)
+		if(pieceCount.second <= 5 || pieceCount.first <= 5)
 			searchDepth = 6;
 		if(pieceCount.second <= 3 || pieceCount.first <= 3)
 			searchDepth = 6;
@@ -208,13 +208,13 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 			bool isLethalToGoal = lethals.second;
 
 			// tempBoard.printBoard();
-			if(depth >= searchDepth-1 && isLethalToGoal == true)
-			{
-				cerr << "///////////////////////// GOAL IN DANGER /////////////////////\n";
-				// pair<Move,int> anticipation = alphaBetaMinimax(tempBoard, 1, false, alpha, beta);
-				// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'T')
-					return {legalMoves[i], tempBoard.heuristicScore()};
-			}
+			// if(depth >= searchDepth-1 && isLethalToGoal == true)
+			// {
+			// 	cerr << "///////////////////////// GOAL IN DANGER /////////////////////\n";
+			// 	// pair<Move,int> anticipation = alphaBetaMinimax(tempBoard, 1, false, alpha, beta);
+			// 	// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'T')
+			// 		return {legalMoves[i], tempBoard.heuristicScore()};
+			// }
 			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, false, alpha, beta);
 			
 			if(tempScore.second > maxScore)
@@ -246,13 +246,13 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 			//makeMove(legalMoves[i], &tempBoard);
 
 			// cerr << "Move at depth: " << depth << " is "
-			if(depth >= searchDepth-1 && isLethalToGoal == true)
-			{
-				cerr << "///////////////////////// TOWNHALL IN DANGER /////////////////////\n";
-				// pair<Move,int> anticipation = alphaBetaMinimax(tempBoard, 1, true, alpha, beta);
-				// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'G')
-					return {legalMoves[i], tempBoard.heuristicScore()};
-			}
+			// if(depth >= searchDepth-1 && isLethalToGoal == true)
+			// {
+			// 	cerr << "///////////////////////// TOWNHALL IN DANGER /////////////////////\n";
+			// 	// pair<Move,int> anticipation = alphaBetaMinimax(tempBoard, 1, true, alpha, beta);
+			// 	// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'G')
+			// 		return {legalMoves[i], tempBoard.heuristicScore()};
+			// }
 			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, true, alpha, beta);
 			if(tempScore.second < minScore)
 				optimalMoveList = {};
