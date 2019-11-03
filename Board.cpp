@@ -1,9 +1,9 @@
-#include "pch.h"
 #include "Board.h"
 #include "Move.h"
 #include <vector>
 #include <iostream>
 #include <tuple>
+#include <set>
 
 using namespace std;
 
@@ -68,26 +68,6 @@ Board::Board()
 {
 
 }
-
-// Board::Board(int k)
-// {
-// 	vector<char> vec0 = {'G','-','G','-','G','E','G','E'};
-// 	vector<char> vec1 = {'-','E','-','-','-','-','-','E'};
-// 	vector<char> vec2 = {'-','E','-','E','-','E','-','-'};
-// 	vector<char> vec3 = {'-','-','-','E','-','-','-','-'};
-// 	vector<char> vec4 = {'-','-','-','E','-','-','S','-'};
-// 	vector<char> vec5 = {'S','-','S','-','-','-','-','S'};
-// 	vector<char> vec6 = {'S','S','-','-','-','-','-','-'};
-// 	vector<char> vec7 = {'S','T','-','T','-','T','-','T'};
-// 	config.push_back(vec0);
-// 	config.push_back(vec1);
-// 	config.push_back(vec2);
-// 	config.push_back(vec3);
-// 	config.push_back(vec4);
-// 	config.push_back(vec5);
-// 	config.push_back(vec6);
-// 	config.push_back(vec7);
-// }
 
 vector<Move> Board::validMoves(bool side)
 {
@@ -452,10 +432,15 @@ int Board::utilityScore()
 }
 
 //Returns the number of vertical, horizontal and diagonal cannons, and number of enemies under attack by cannons, soldiers and retreats
-tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool side)
+tuple <int, int, int, int, int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool side)
 {
 	int vertCannons = 0, horizCannons = 0, diagCannons = 0, cannonAttack = 0, soldierAttackNormal = 0, soldierAttackRetreat = 0, cannonAttackingPosition = 0;
-	int goalScore = 5;		//checked that keeping it 10 results in more aggression
+	int goalScore = 3;		//checked that keeping it 10 results in more aggression
+	int numSoldiersOnAttack = 0, numEnemiesUnderAttack = 0;
+	int numGoalsUnderAttack = 0, numTownhallsUnderAttack = 0;
+	set<pair<int,int>> hash_Set1;
+	set<pair<int,int>> hash_Set2;
+	set<pair<int,int>> hash_Set3;
 	if(!side)
 		reverseBoard();
 
@@ -469,23 +454,50 @@ tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool s
 				if (positionIsValid({ i - 1,j - 1 }) && !checkSoldierOrTownhall({ i - 1,j - 1 }))
 				{
 					if(checkEnemy({ i - 1,j - 1 }))
+					{
 						soldierAttackNormal++;
+						hash_Set1.insert({i,j});
+						hash_Set2.insert({ i - 1,j - 1 });
+					}
 					else if(checkGoal({ i - 1,j - 1 }))
+					{
 						soldierAttackNormal += goalScore;
+						hash_Set1.insert({i,j});
+						hash_Set2.insert({ i - 1,j - 1 });
+						hash_Set3.insert({ i - 1,j - 1 });
+					}
 				}
 				if (positionIsValid({ i - 1,j }) && !checkSoldierOrTownhall({ i - 1,j }))
 				{
 					if(checkEnemy({ i - 1,j}))
+					{
 						soldierAttackNormal++;
+						hash_Set1.insert({i,j});
+						hash_Set2.insert({ i - 1,j });
+					}
 					else if(checkGoal({ i - 1,j }))
+					{
 						soldierAttackNormal += goalScore;
+						hash_Set1.insert({i,j});
+						hash_Set2.insert({ i - 1,j });
+						hash_Set3.insert({ i - 1,j });
+					}
 				}
 				if (positionIsValid({ i - 1,j + 1 }) && !checkSoldierOrTownhall({ i - 1,j + 1 }))
 				{
 					if(checkEnemy({ i - 1,j + 1 }))
+					{
 						soldierAttackNormal++;
+						hash_Set1.insert({i,j});
+						hash_Set2.insert({ i - 1,j + 1 });
+					}
 					else if(checkGoal({ i - 1,j + 1 }))
+					{
 						soldierAttackNormal += goalScore;
+						hash_Set1.insert({i,j});
+						hash_Set2.insert({ i - 1,j + 1 });
+						hash_Set3.insert({ i - 1,j + 1});
+					}
 				}
 
 				//Retreat in 3 directions
@@ -494,30 +506,60 @@ tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool s
 					if (positionIsValid({ i + 2,j - 2 }) && !checkSoldierOrTownhall({ i + 2,j - 2 }))
 					{
 						if(checkEnemy({ i + 2,j - 2 }))
+						{
 							soldierAttackRetreat++;
+							hash_Set1.insert({i,j});
+							hash_Set2.insert({ i + 2,j - 2 });
+						}
 					}
 					if (positionIsValid({ i + 2,j }) && !checkSoldierOrTownhall({ i + 2,j }))
 					{
 						if(checkEnemy({ i + 2,j }))
+						{
 							soldierAttackRetreat++;
+							hash_Set1.insert({i,j});
+							hash_Set2.insert({ i + 2,j });
+						}
 					}
 					if (positionIsValid({ i + 2,j + 2 }) && !checkSoldierOrTownhall({ i + 2,j + 2 }))
 					{
 						if(checkEnemy({ i + 2,j + 2 }))
+						{
 							soldierAttackRetreat++;
+							hash_Set1.insert({i,j});
+							hash_Set2.insert({ i + 2,j + 2 });
+						}
 					}
 				}
 
 				//Kill horizontal enemies
 				if(checkEnemy({ i,j - 1 }))
+				{
 					soldierAttackNormal++;
+					hash_Set1.insert({i,j});
+					hash_Set2.insert({ i ,j - 1 });
+				}
 				else if(checkGoal({ i ,j - 1 }))
+				{
 					soldierAttackNormal += goalScore;
+					hash_Set1.insert({i,j});
+					hash_Set2.insert({ i ,j - 1 });
+					hash_Set3.insert({ i ,j - 1});
+				}
 				
 				if(checkEnemy({ i,j + 1 }))
+				{
 					soldierAttackNormal++;
+					hash_Set1.insert({i,j});
+					hash_Set2.insert({ i ,j + 1 });
+				}
 				else if(checkGoal({ i,j + 1 }))
+				{
 					soldierAttackNormal += goalScore;
+					hash_Set1.insert({i,j});
+					hash_Set2.insert({ i ,j + 1 });
+					hash_Set3.insert({ i ,j + 1});
+				}
 
 				//Check the 3 cannons possible with centre at [i,j]
 				//Horizontal cannon
@@ -528,25 +570,37 @@ tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool s
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i ,j - 3 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i ,j - 3 });
+						}
 					}
 					if (positionIsValid({ i,j - 4 }) && !checkSoldierOrTownhall({ i,j - 4 }) && checkEmpty({ i,j - 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i ,j - 4 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i ,j - 4 });
+						}
 					}
 					if (positionIsValid({ i,j + 3 }) && !checkSoldierOrTownhall({ i,j + 3 }) && checkEmpty({ i,j + 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i ,j + 3 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i ,j + 3 });
+						}
 					}
 					if (positionIsValid({ i,j + 4 }) && !checkSoldierOrTownhall({ i,j + 4 }) && checkEmpty({ i,j + 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i ,j + 4 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i ,j + 4 });
+						}
 					}
 				}
 
@@ -558,29 +612,49 @@ tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool s
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i - 3,j }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i - 3,j });
+						}
 						else if(checkGoal({ i - 3,j }))
+						{
 							cannonAttack += goalScore;
+							hash_Set2.insert({ i - 3,j });
+							hash_Set3.insert({ i - 3,j });
+						}
 					}
 					if (positionIsValid({ i - 4,j }) && !checkSoldierOrTownhall({ i - 4,j }) && checkEmpty({ i - 2,j }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i - 4,j }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i - 4,j });
+						}
 						else if(checkGoal({ i - 4,j }))
+						{
 							cannonAttack += goalScore;
+							hash_Set2.insert({ i - 4,j });
+							hash_Set3.insert({ i - 4,j });
+						}
 					}
 					if (positionIsValid({ i + 3,j }) && !checkSoldierOrTownhall({ i + 3,j }) && checkEmpty({ i + 2,j }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i + 3,j }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i + 3,j });
+						}
 					}
 					if (positionIsValid({ i + 4,j }) && !checkSoldierOrTownhall({ i + 4,j }) && checkEmpty({ i + 2,j }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i + 4,j }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i + 4,j });
+						}
 					}
 				}
 
@@ -593,29 +667,49 @@ tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool s
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i - 3 ,j - 3 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i - 3,j - 3 });
+						}
 						else if(checkGoal({ i - 3,j - 3}))
+						{
 							cannonAttack += goalScore;
+							hash_Set2.insert({ i - 3,j - 3});
+							hash_Set3.insert({ i - 3,j - 3});
+						}
 					}
 					if (positionIsValid({ i - 4,j - 4 }) && !checkSoldierOrTownhall({ i - 4,j - 4 }) && checkEmpty({ i - 2,j - 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i - 4,j - 4 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i - 4,j - 4 });
+						}
 						else if(checkGoal({ i - 4,j - 4 }))
+						{
 							cannonAttack += goalScore;
+							hash_Set2.insert({ i - 4,j - 4 });
+							hash_Set3.insert({ i - 4,j - 4});
+						}
 					}
 					if (positionIsValid({ i + 3,j + 3 }) && !checkSoldierOrTownhall({ i + 3,j + 3 }) && checkEmpty({ i + 2,j + 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i + 3,j + 3 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i + 3,j + 3 });
+						}
 					}
 					if (positionIsValid({ i + 4,j + 4 }) && !checkSoldierOrTownhall({ i + 4,j + 4 }) && checkEmpty({ i + 2,j + 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i + 4,j + 4 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i + 4,j + 4 });
+						}
 					}
 				}
 
@@ -628,29 +722,49 @@ tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool s
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i - 3,j + 3 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i - 3,j + 3});
+						}
 						else if(checkGoal({ i - 3,j + 3 }))
+						{
 							cannonAttack += goalScore;
+							hash_Set2.insert({ i - 3,j + 3 });
+							hash_Set3.insert({ i - 3,j + 3});
+						}
 					}
 					if (positionIsValid({ i - 4,j + 4 }) && !checkSoldierOrTownhall({ i - 4,j + 4 }) && checkEmpty({ i - 2,j + 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i - 4,j + 4 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i - 4,j + 4});
+						}
 						else if(checkGoal({ i - 4,j + 4}))
+						{
 							cannonAttack += goalScore;
+							hash_Set2.insert({ i - 4,j + 4 });
+							hash_Set3.insert({ i - 4,j + 4});
+						}
 					}
 					if (positionIsValid({ i + 3,j - 3 }) && !checkSoldierOrTownhall({ i + 3,j - 3 }) && checkEmpty({ i + 2,j - 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i + 3,j - 3 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i + 3,j - 3 });
+						}
 					}
 					if (positionIsValid({ i + 4,j - 4 }) && !checkSoldierOrTownhall({ i + 4,j - 4 }) && checkEmpty({ i + 2,j - 2 }))
 					{
 						cannonAttackingPosition++;
 						if(checkEnemy({ i + 4 ,j + 4 }))
+						{
 							cannonAttack++;
+							hash_Set2.insert({ i + 4,j + 4 });
+						}
 					}
 				}
 			}
@@ -660,7 +774,7 @@ tuple <int, int, int, int, int, int, int> Board::cannonsAndSoldierAttacks(bool s
 	if(!side)
 		reverseBoard();
 
-	return make_tuple(vertCannons, horizCannons, diagCannons, cannonAttack, soldierAttackNormal, soldierAttackRetreat, cannonAttackingPosition);
+	return make_tuple(vertCannons, horizCannons, diagCannons, cannonAttack, soldierAttackNormal, soldierAttackRetreat, cannonAttackingPosition, hash_Set1.size(), hash_Set2.size(), hash_Set3.size(),0);
 
 }
 
@@ -672,7 +786,9 @@ int Board::heuristicScore()
 	int enemyCount = 0;
 	int soldierCount = 0;
 	int vertCannons, horizCannons, diagCannons, cannonAttack, soldierAttackNormal, soldierAttackRetreat, cannonAttackingPosition;
-
+	int numOfSoldierOnAttack, numOfEnemiesOnAttack, numOfSoldierUnderAttack, numOfEnemiesUnderAttack;
+	int numGoalsOnAttack, numTownhallsUnderAttack;
+	int myCannonAttack, enemyCannonAttack; 
 	//Counting the pieces on the board
 	for(int i=0 ; i<n ; i++)
 	{
@@ -689,22 +805,27 @@ int Board::heuristicScore()
 		}
 	}
 
-	tuple<int, int, int, int, int, int, int> answerBlack = cannonsAndSoldierAttacks(true);
-	tuple<int, int, int, int, int, int, int> answerWhite = cannonsAndSoldierAttacks(false);
+	tuple<int, int, int, int, int, int, int, int, int, int, int> answerBlack = cannonsAndSoldierAttacks(true);
+	tuple<int, int, int, int, int, int, int, int, int, int, int> answerWhite = cannonsAndSoldierAttacks(false);
 	vertCannons = get<0>(answerBlack) - get<0>(answerWhite);
 	horizCannons =  get<1>(answerBlack) - get<1>(answerWhite);
 	diagCannons =  get<2>(answerBlack) - get<2>(answerWhite);
 	cannonAttack =  get<3>(answerBlack) - get<3>(answerWhite);
+	myCannonAttack = get<3>(answerBlack);
+	enemyCannonAttack = get<3>(answerWhite);
 	soldierAttackNormal = get<4>(answerBlack) - get<4>(answerWhite);
 	soldierAttackRetreat =  get<5>(answerBlack) - get<5>(answerWhite);
 	cannonAttackingPosition = get<6>(answerBlack) - get<6>(answerWhite);
-	//count the number of horizontal, vertical and diagonal cannons and adding as 6*vertical + 4*diagonal + 2*horizontal
-	
-	//count number of lethal cannon attacks and soldier lethal attacks during advance and soldier lethal attacks during retreat and adding as 3*cannon_attacks + 6*retreat_soldier_attacks + 1*advance_soldier_attacks
-	// cerr << vertCannons << horizCannons << diagCannons << cannonAttack << soldierAttackNormal << soldierAttackRetreat << endl;
-	//a1: return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat + 2*soldierAttackNormal + 100*(soldierCount - enemyCount) + 2000*(townhallCount - goalCount);
-	return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat + 2*soldierAttackNormal + 100*(soldierCount - enemyCount) + 50*soldierCount + 2000*(townhallCount - goalCount);
-	// return vertCannons + diagCannons + horizCannons + cannonAttack + soldierAttackRetreat + 100*(soldierCount - enemyCount) + 2000*(townhallCount - goalCount);
-}
+	numOfSoldierOnAttack = get<7>(answerBlack);
+	numOfEnemiesOnAttack = get<7>(answerWhite);
+	numOfEnemiesUnderAttack = get<8>(answerBlack);
+	numOfSoldierUnderAttack = get<8>(answerWhite);
+	numGoalsOnAttack = get<9>(answerBlack);
+	numTownhallsUnderAttack = get<9>(answerWhite);
 
-//before applying alpha beta we check if any townhall can be destroyed
+	if(soldierCount >= 7)
+		return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 2*soldierAttackNormal + 1*(numOfSoldierOnAttack) - 10*(numOfSoldierUnderAttack) + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
+	else
+		return 3*vertCannons + 2*diagCannons + 2*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 10*(numOfSoldierOnAttack) - 15*(numOfSoldierUnderAttack) + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
+	
+}

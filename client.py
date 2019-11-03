@@ -8,7 +8,7 @@ from game import Game
 class Client(Communicator):
 	def __init__(self):
 		self.GAME_TIMER = 100000 # in Milli Seconds
-		self.NETWORK_TIMER = 30
+		self.NETWORK_TIMER = 150
 		super(Client,self).__init__()
 		pass
 
@@ -53,11 +53,6 @@ class Client(Communicator):
 					return True
 				else:
 					return False
-			elif(Execution_Command == '.\\'):
-				if(Extension == 'exe'):
-					return True
-				else:
-					return False
 		else:
 			return False
 
@@ -90,7 +85,9 @@ class Client(Communicator):
 		self.clientSocket = socket.socket()
 		try:
 			self.clientSocket.connect((server_address,port_no))
+			print("Connection established")
 		except:
+			print("Connection to server failed")
 			pass
 		super(Client,self).setSocket(self.clientSocket,self.NETWORK_TIMER)
 
@@ -223,8 +220,6 @@ def game_loop(args):
 		client.CreateChildProcess('python', args.exe)
 	elif args.exe.endswith('.sh'):
 		client.CreateChildProcess('sh', args.exe)
-	elif args.exe.endswith('.exe'):
-		client.CreateChildProcess('.\\', args.exe)
 	else:
 		client.CreateChildProcess('sh', args.exe)
 

@@ -55,13 +55,13 @@ Here are the sample instructions used to match two random players against each o
 ### Setup Server
 `python server.py 10000 -n 8 -m 8 -NC 2 -TL 150 -LOG server.log`
 ### Setup Client 1
-`export PATH=$PATH:'G:\5th_semester\Artificial Intelligence\Assignment2\chromedriver_win32'`
+`export PATH=$PATH:'/home/chrome_driver_directory'`
 
 `python client.py localhost 10000 RandomPlayer.py -mode GUI`
 ### Setup Client 2
-`export PATH=$PATH:'G:\5th_semester\Artificial Intelligence\Assignment2\chromedriver_win32'`
+export PATH=$PATH:'/mnt/d/Master/Study/Semester5/COL333/Assignment-2/chromedriver_win32/'
 
-`python client.py localhost 10000 RandomPlayer.py`
+python client.py localhost 10000 RandomPlayer.py
 
 ## Gameplay
 The game play consists of the players executing a sequence of moves in a single turn.

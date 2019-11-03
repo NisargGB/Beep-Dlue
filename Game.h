@@ -1,5 +1,4 @@
 #pragma once
-#include "pch.h"
 #include "Board.h"
 #include "Move.h"
 #include <vector>

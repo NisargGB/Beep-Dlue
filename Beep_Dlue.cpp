@@ -1,10 +1,8 @@
 // Beep_Dlue.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
-
-#include "pch.h"
 #include "Game.h"
 #include <iostream>
-#include "Time.h"
+// #include "Time.h"
 
 int main()
 {
