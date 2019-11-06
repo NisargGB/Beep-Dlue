@@ -42,11 +42,13 @@ void Game::start()
 			// vector<Move> list = board.validMoves(true);			//List of all possible moves
 			
 			// cerr << "Searching for optimal move\n";
-			pair<Move, int> optimalStep = alphaBetaMinimax(board, searchDepth, true, -100000, 100000);		//The optimal move from alpha-bta search
+			pair<vector<Move>, int> optimalStep = alphaBetaMinimax(board, searchDepth, true, -100000, 100000, {});		//The optimal move from alpha-bta search
 			// cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
 
-			makeMove(optimalStep.first, &board);		//Make the optimal move
-			cout << moveToString(optimalStep.first) << endl;
+			explainMoves(optimalStep.first, optimalStep.second, board);
+			makeMove(optimalStep.first[0], &board);		//Make the optimal move
+			cout << moveToString(optimalStep.first[0]) << endl;
+			
 			// board.printBoard();
 
 
@@ -75,11 +77,13 @@ void Game::start()
 			// vector<Move> list = board.validMoves(false);			//List of all possible moves
 			
 			// cerr << "Searching for optimal move\n";
-			pair<Move, int> optimalStep = alphaBetaMinimax(board, searchDepth, false, -100000, 100000);		//The optimal move from alpha-bta search
+			pair<vector<Move>, int> optimalStep = alphaBetaMinimax(board, searchDepth, false, -100000, 100000, {});		//The optimal move from alpha-bta search
 			// cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
 
-			makeMove(optimalStep.first, &board);		//Make the optimal move
-			cout << moveToString(optimalStep.first) << endl;
+			explainMoves(optimalStep.first, optimalStep.second, board);
+			makeMove(optimalStep.first[0], &board);		//Make the optimal move
+			cout << moveToString(optimalStep.first[0]) << endl;
+			
 			// board.printBoard();
 			
 		}
@@ -172,14 +176,14 @@ Move Game::stringToMove(pair<int,int> src, pair<int,int> tgt, char nature, bool 
 
 
 
-pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int alpha, int beta)
+pair<vector<Move>,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int alpha, int beta, vector<Move> selectedMoves)
 {
 	// cerr << "I recieved this board\n";
 	// b.printBoard();
 	if(b.isTerminal(isMaximizing))
 	{
 		// cerr << "Utility value: " << b.heuristicScore() << " at depth: " << depth << endl;
-		return {Move({-1,-1}, {-1,-1}, 'x', true), b.heuristicScore()};
+		return {selectedMoves, b.heuristicScore()};
 	}
 
 	if(depth == 0)
@@ -187,7 +191,7 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 		// cerr << "End point " << endl;
 		// b.printBoard();
 		// cerr << "Heuristic value: " << b.heuristicScore() << endl << endl;
-		return {Move({-1,-1}, {-1,-1}, 'x', true), b.heuristicScore()};
+		return {selectedMoves, b.heuristicScore()};
 	}
 
 	if(isMaximizing)
@@ -196,13 +200,17 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 		int maxScore = -100000;
 		vector<Move> legalMoves = b.validMoves(true);
 		// int optimalMoveIndex = -1;
-		vector<Move> optimalMoveList;
+		vector<vector<Move>> optimalMoveList;
 		for(int i=0 ; i<legalMoves.size() ; i++)
 		{
 			// cerr << "************************---------------************ Max Trying move: " << moveToString(legalMoves[i]) << endl;
 			Board tempBoard = b;
+			vector<Move> tempSelectedMoves = selectedMoves;	// the list to be passed on initialized
 			pair<bool,bool> lethals;
+			
 			lethals = (makeMove(legalMoves[i], &tempBoard));
+			tempSelectedMoves.push_back(legalMoves[i]);	// the list of selected moves updated and ready to be passed on
+			
 			bool isLethalToTownhall = lethals.first;
 			bool isLethalToGoal = lethals.second;
 
@@ -214,18 +222,19 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 			// 	// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'T')
 			// 		return {legalMoves[i], tempBoard.heuristicScore()};
 			// }
-			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, false, alpha, beta);
+			pair<vector<Move>,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, false, alpha, beta, tempSelectedMoves);
 			
 			if(tempScore.second > maxScore)
 				optimalMoveList = {};
 			maxScore = max(maxScore, tempScore.second);
 			if(maxScore == tempScore.second)
-				optimalMoveList.push_back(legalMoves[i]);
+				optimalMoveList.push_back(tempScore.first);
 			alpha = max(alpha, maxScore);
 			if(alpha >= beta)
 				break;
 		}
 
+		// returning a randomly selected move from the list of optimal moves appended to the end of already selected moves
 		return {optimalMoveList[rand() % optimalMoveList.size()], maxScore};
 	}
 	else
@@ -233,13 +242,17 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 		// cerr << "MIN at : " << depth << endl;
 		int minScore = 100000;
 		vector<Move> legalMoves = b.validMoves(false);
-		vector<Move> optimalMoveList;
+		vector<vector<Move>> optimalMoveList;
 		for(int i=0 ; i<legalMoves.size() ; i++)
 		{
 			// cerr << "************************---------------************ Min Trying move: " << moveToString(legalMoves[i]) << endl;
 			Board tempBoard = b;
+			vector<Move> tempSelectedMoves = selectedMoves;	// the list to be passed on initialized
 			pair<bool,bool> lethals;
+			
 			lethals = (makeMove(legalMoves[i], &tempBoard));
+			tempSelectedMoves.push_back(legalMoves[i]);	// the list of selected moves updated and ready to be passed on
+
 			bool isLethalToTownhall = lethals.first;
 			bool isLethalToGoal = lethals.second;
 			//makeMove(legalMoves[i], &tempBoard);
@@ -252,18 +265,42 @@ pair<Move,int> Game::alphaBetaMinimax(Board b, int depth, bool isMaximizing, int
 			// 	// if(tempBoard.config[anticipation.first.to.first][anticipation.first.to.second] != 'G')
 			// 		return {legalMoves[i], tempBoard.heuristicScore()};
 			// }
-			pair<Move,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, true, alpha, beta);
+			pair<vector<Move>,int> tempScore = alphaBetaMinimax(tempBoard, depth-1, true, alpha, beta, tempSelectedMoves);
 			if(tempScore.second < minScore)
 				optimalMoveList = {};
 			minScore = min(minScore, tempScore.second);
 			if(minScore == tempScore.second)
-				optimalMoveList.push_back(legalMoves[i]);
+				optimalMoveList.push_back(tempScore.first);
 			beta = min(beta, minScore);
 			if(alpha >= beta)
 				break;
 		}
 
 		// cerr << "Min node will play: " << moveToString(legalMoves[optimalMoveIndex]) << endl;
+
+		// returning a randomly selected move from the list of optimal moves appended to the end of already selected moves
 		return {optimalMoveList[rand() % optimalMoveList.size()], minScore};
 	}
+}
+
+
+void Game::explainMoves(vector<Move> trail, int score, Board boardConfig)
+{
+	cerr << "The trail of moves predicted by bot is-\n";
+	bool isOpponent = false;
+	Board tempBoard = boardConfig;
+
+	for(Move m : trail)
+	{
+		if(isOpponent)
+			cerr << "Opponent : ";
+		else
+			cerr << "Beep-Dlue : ";
+		cerr << moveToString(m) << '\n';
+		makeMove(m, &tempBoard);
+		tempBoard.printBoard();
+		isOpponent = !isOpponent;
+	}
+	
+	cerr << "The utility score predicted : " << score << "\n\n";
 }

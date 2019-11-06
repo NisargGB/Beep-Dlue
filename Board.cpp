@@ -824,7 +824,7 @@ int Board::heuristicScore()
 	numTownhallsUnderAttack = get<9>(answerWhite);
 
 	if(soldierCount >= 7)
-		return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 2*soldierAttackNormal + 1*(numOfSoldierOnAttack) - 10*(numOfSoldierUnderAttack) + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
+		return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 0*(numOfSoldierOnAttack) - 10*(numOfSoldierUnderAttack) + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
 	else
 		return 3*vertCannons + 2*diagCannons + 2*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 10*(numOfSoldierOnAttack) - 15*(numOfSoldierUnderAttack) + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
 	

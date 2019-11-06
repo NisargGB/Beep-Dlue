@@ -17,5 +17,6 @@ public:
 	pair<bool, bool> makeMove(Move move, Board *boardIn);
 	string moveToString(Move move);
 	Move stringToMove(pair<int, int> src, pair<int, int> tgt, char nature, bool polarity);
-	pair<Move,int> alphaBetaMinimax(Board b, int depth, bool isMaximizing, int alpha, int beta);
+	pair<vector<Move>,int> alphaBetaMinimax(Board b, int depth, bool isMaximizing, int alpha, int beta, vector<Move> selectedMoves);
+	void explainMoves(vector<Move> trail, int score, Board boardConfig);
 };

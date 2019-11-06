@@ -53,15 +53,12 @@ You can check you chrome version following the steps below:
 ## Run Instructions
 Here are the sample instructions used to match two random players against each other over the server network.
 ### Setup Server
-`python server.py 10000 -n 8 -m 8 -NC 2 -TL 150 -LOG server.log`
-### Setup Client 1
-`export PATH=$PATH:'/home/chrome_driver_directory'`
-
-`python client.py localhost 10000 RandomPlayer.py -mode GUI`
-### Setup Client 2
+export PATH=$PATH:'/home/nisarg/Study/COL333/'
 export PATH=$PATH:'/mnt/d/Master/Study/Semester5/COL333/Assignment-2/chromedriver_win32/'
-
-python client.py localhost 10000 RandomPlayer.py
+`python server.py 10000 -n 8 -m 8 -NC 2 -TL 150 -LOG server.log`
+### Setup Client
+`python client.py localhost 10000 run.sh -mode GUI`
+`python client.py localhost 10000 RandomPlayer.py`
 
 ## Gameplay
 The game play consists of the players executing a sequence of moves in a single turn.
