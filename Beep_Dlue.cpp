@@ -9,7 +9,7 @@ int main()
 {
 	srand(time(0));
 	#ifdef DEBUG
-		Game dgame(8, 8, true);
+		Game dgame;
 		dgame.start();
 		return 0;
 	#endif

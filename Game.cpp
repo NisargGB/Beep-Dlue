@@ -12,7 +12,7 @@ using namespace std;
 
 Game::Game()
 {
-	//
+	
 }
 
 Game::Game(int nin, int min, bool debug)
@@ -49,10 +49,9 @@ void Game::start()
 	m = min;
 	time_limit = timein;
 	time_left = time_limit;
-	Board newBoard(n, m);
+	Board newBoard(n, m, true);
 	board = newBoard;
 	int plays = 0;
-
 
 	while (true)
 	{
@@ -258,37 +257,53 @@ pair<vector<Move>,int> Game::maxValue(Board b, int depth, int alpha, int beta, v
 	{
 		return {selectedMoves, b.heuristicScore()};
 	}
-		int maxScore = -100000;
-		vector<Move> legalMoves = b.validMoves(true);
-		// int optimalMoveIndex = -1;
-		vector<vector<Move>> optimalMoveList;
-		for(int i=0 ; i<legalMoves.size() ; i++)
-		{
-			// cerr << "************************---------------************ Max Trying move: " << moveToString(legalMoves[i]) << endl;
-			Board tempBoard = b;
-			vector<Move> tempSelectedMoves = selectedMoves;	// the list to be passed on initialized
-			pair<bool,bool> lethals;
-			
-			lethals = (makeMove(legalMoves[i], &tempBoard));
-			tempSelectedMoves.push_back(legalMoves[i]);	// the list of selected moves updated and ready to be passed on
-			
-			bool isLethalToTownhall = lethals.first;
-			bool isLethalToGoal = lethals.second;
+	int maxScore = -100000;
+	vector<Move> legalMoves = b.validMoves(true);
+	// int optimalMoveIndex = -1;
+	vector<vector<Move>> optimalMoveList;
+	for(int i=0 ; i<legalMoves.size() ; i++)
+	{
+		// cerr << "************************---------------************ Max Trying move: " << moveToString(legalMoves[i]) << endl;
+		Board tempBoard = b;
+		vector<Move> tempSelectedMoves = selectedMoves;	// the list to be passed on initialized
+		pair<bool,bool> lethals;
+		
+		lethals = (makeMove(legalMoves[i], &tempBoard));
+		tempSelectedMoves.push_back(legalMoves[i]);	// the list of selected moves updated and ready to be passed on
+		
+		// bool isLethalToTownhall = lethals.first;
+		bool isLethalToGoal = lethals.second;
 
-			pair<vector<Move>,int> tempScore = minValue(tempBoard, depth-1, alpha, beta, tempSelectedMoves);
-			
-			if(tempScore.second > maxScore)
-				optimalMoveList = {};
-			maxScore = max(maxScore, tempScore.second);
-			if(maxScore == tempScore.second)
-				optimalMoveList.push_back(tempScore.first);
-			alpha = max(alpha, maxScore);
-			if(alpha > beta){
-				return {optimalMoveList[rand() % optimalMoveList.size()], maxScore};
+		if(depth >= searchDepth-1 && isLethalToGoal == true)
+		{
+			int goalsLeft = 0;
+			for(int j = 0; j < m; j++)
+			{
+				if(tempBoard.config[0][j] == 'G')
+				{
+					goalsLeft++;
+				}
+			}
+			if(goalsLeft == m/2 - 2){
+				cerr << "///////////////////////// GOAL IN DANGER /////////////////////\n";
+				return {{legalMoves[i]}, tempBoard.heuristicScore()};
 			}
 		}
-		// returning a randomly selected move from the list of optimal moves appended to the end of already selected moves
-		return {optimalMoveList[rand() % optimalMoveList.size()], maxScore};	
+
+		pair<vector<Move>,int> tempScore = minValue(tempBoard, depth-1, alpha, beta, tempSelectedMoves);
+		
+		if(tempScore.second > maxScore)
+			optimalMoveList = {};
+		maxScore = max(maxScore, tempScore.second);
+		if(maxScore == tempScore.second)
+			optimalMoveList.push_back(tempScore.first);
+		alpha = max(alpha, maxScore);
+		if(alpha > beta){
+			return {optimalMoveList[rand() % optimalMoveList.size()], maxScore};
+		}
+	}
+	// returning a randomly selected move from the list of optimal moves appended to the end of already selected moves
+	return {optimalMoveList[rand() % optimalMoveList.size()], maxScore};	
 
 }
 
@@ -316,9 +331,23 @@ pair<vector<Move>,int> Game::minValue(Board b, int depth, int alpha, int beta, v
 		lethals = (makeMove(legalMoves[i], &tempBoard));
 		tempSelectedMoves.push_back(legalMoves[i]);	// the list of selected moves updated and ready to be passed on
 
-		bool isLethalToTownhall = lethals.first;
+		//bool isLethalToTownhall = lethals.first;
 		bool isLethalToGoal = lethals.second;
-		
+		if(depth >= searchDepth-1 && isLethalToGoal == true)
+		{
+			int goalsLeft = 0;
+			for(int j = 0; j < m; j++)
+			{
+				if(tempBoard.config[n-1][j] == 'T')
+				{
+					goalsLeft++;
+				}
+			}
+			if(goalsLeft == m/2 - 2){
+				cerr << "///////////////////////// TOWNHALL IN DANGER /////////////////////\n";
+				return {{legalMoves[i]}, tempBoard.heuristicScore()};
+			}
+		}
 		pair<vector<Move>,int> tempScore = maxValue(tempBoard, depth-1, alpha, beta, tempSelectedMoves);
 		if(tempScore.second < minScore)
 			optimalMoveList = {};

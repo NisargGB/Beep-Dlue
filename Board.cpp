@@ -75,6 +75,30 @@ Board::Board()
 
 }
 
+Board::Board(int nin, int min, bool debug)
+{
+	n = nin;
+	m = min;
+	// Board newBoard(n);
+	if(debug){
+		vector<vector<char>> initBoard(n);
+		for(int i = 0; i < n; i++){
+			vector<char> row(m);
+			for(int j = 0; j < m; j++){
+				cin >> row[j];				
+			}
+			initBoard[i] = row;
+		}
+		// Board newBoard(initBoard);
+		// board = newBoard;
+		config = initBoard;	
+	}
+	else{
+		// Board newBoard(n, m);
+		// board = newBoard;
+	}
+}
+
 Board::Board(vector<vector<char>> initBoard){
 	config = initBoard;
 	n = initBoard.size();
@@ -859,13 +883,13 @@ int Board::heuristicScore()
 	enemiesUnderCannonAttack = get<10>(answerBlack);
 	soldiersUnderCannonAttack = get<10>(answerWhite);
 
-	return (soldierPosition - enemyPosition) + 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 5*(numOfEnemiesUnderAttack) - 5*(numOfSoldierUnderAttack) -5*soldiersUnderCannonAttack + 5*enemiesUnderCannonAttack + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
+	// return (soldierPosition - enemyPosition) + 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 5*(numOfEnemiesUnderAttack) - 5*(numOfSoldierUnderAttack) -5*soldiersUnderCannonAttack + 5*enemiesUnderCannonAttack + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
 	// return  4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 0*(numOfSoldierOnAttack) - 5*(numOfSoldierUnderAttack) -5*soldiersUnderCannonAttack + 5*enemiesUnderCannonAttack + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
 	
-	// if(soldierCount >= 7)
-	// 	return (soldierPosition - enemyPosition) + 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 5*(numOfEnemiesUnderAttack) - 5*(numOfSoldierUnderAttack) - 5*soldiersUnderCannonAttack + 5*enemiesUnderCannonAttack + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
-	// else
-	// 	return (soldierPosition - enemyPosition) + 3*vertCannons + 2*diagCannons + 2*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 10*numOfEnemiesUnderAttack - 15*(numOfSoldierUnderAttack) - 5*soldiersUnderCannonAttack + 5*enemiesUnderCannonAttack + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
+	if(soldierCount >= 7)
+		return (soldierPosition - enemyPosition) + 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 5*(numOfEnemiesUnderAttack) - 5*(numOfSoldierUnderAttack) - 5*soldiersUnderCannonAttack + 5*enemiesUnderCannonAttack + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
+	else
+		return (soldierPosition - enemyPosition) + 3*vertCannons + 2*diagCannons + 2*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 10*numOfEnemiesUnderAttack - 15*(numOfSoldierUnderAttack) - 5*soldiersUnderCannonAttack + 5*enemiesUnderCannonAttack + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;
 
 	// if(soldierCount >= 7)
 	// 	return 4*vertCannons + 3*diagCannons + 1*horizCannons + 3*cannonAttack + 2*cannonAttackingPosition + 6*soldierAttackRetreat+ 0*soldierAttackNormal + 0*(numOfSoldierOnAttack) - 10*(numOfSoldierUnderAttack) + 100*(soldierCount - enemyCount) + 50*soldierCount + 3000*(townhallCount - goalCount) + 0*numGoalsOnAttack - 500*numTownhallsUnderAttack;

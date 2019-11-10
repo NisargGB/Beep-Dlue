@@ -10,6 +10,7 @@ public:
 	int n, m;
 	vector<vector<char>> config;
 	Board(int nin, int min);
+	Board(int nin, int min, bool debug);
 	Board();
 	Board(vector<vector<char>> initBoard);
 	vector<Move> validMoves(bool side);
