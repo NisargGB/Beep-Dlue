@@ -49,7 +49,7 @@ void Game::start()
 	m = min;
 	time_limit = timein;
 	time_left = time_limit;
-	Board newBoard(n, m, true);
+	Board newBoard(n, m);
 	board = newBoard;
 	int plays = 0;
 
@@ -94,7 +94,11 @@ void Game::start()
 			time_t start, end;
 
 			// checking for approaching timeout
-			if(time_left < 16)
+			if(n == 10 && m == 10 && time_left < 40)
+			{
+				searchDepth = 3;
+			}
+			if(m != 10 && time_left < 20)
 			{
 				searchDepth = 3;
 			}
@@ -286,7 +290,8 @@ pair<vector<Move>,int> Game::maxValue(Board b, int depth, int alpha, int beta, v
 			}
 			if(goalsLeft == m/2 - 2){
 				cerr << "///////////////////////// GOAL IN DANGER /////////////////////\n";
-				return {{legalMoves[i]}, tempBoard.heuristicScore()};
+				selectedMoves.push_back(legalMoves[i]);
+				return {selectedMoves, tempBoard.heuristicScore()};
 			}
 		}
 
@@ -345,7 +350,8 @@ pair<vector<Move>,int> Game::minValue(Board b, int depth, int alpha, int beta, v
 			}
 			if(goalsLeft == m/2 - 2){
 				cerr << "///////////////////////// TOWNHALL IN DANGER /////////////////////\n";
-				return {{legalMoves[i]}, tempBoard.heuristicScore()};
+				selectedMoves.push_back(legalMoves[i]);
+				return {selectedMoves, tempBoard.heuristicScore()};
 			}
 		}
 		pair<vector<Move>,int> tempScore = maxValue(tempBoard, depth-1, alpha, beta, tempSelectedMoves);
