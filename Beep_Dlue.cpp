@@ -2,11 +2,16 @@
 //
 #include "Game.h"
 #include <iostream>
-// #include "Time.h"
+#include "Time.h"
 
 int main()
 {
 	srand(time(0));
-	Game game(8, 8);
+	#ifdef DEBUG
+		Game dgame(8, 8, true);
+		dgame.start();
+		return 0;
+	#endif
+	Game game(10, 8);
 	game.start();
 }

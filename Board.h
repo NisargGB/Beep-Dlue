@@ -11,6 +11,7 @@ public:
 	vector<vector<char>> config;
 	Board(int nin, int min);
 	Board();
+	Board(vector<vector<char>> initBoard);
 	vector<Move> validMoves(bool side);
 	void reverseBoard();
 	bool positionIsValid(pair<int, int> pos);
