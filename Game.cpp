@@ -6,16 +6,13 @@
 #include <string>
 #include <tuple>
 #include <time.h>
+#include <chrono>
 using namespace std;
 
 
-Game::Game(int nin, int min)
+Game::Game()
 {
-	n = nin;
-	m = min;
-	Board newBoard(n, m);
-	// Board newBoard(n);
-	board = newBoard;
+	//
 }
 
 Game::Game(int nin, int min, bool debug)
@@ -43,9 +40,17 @@ Game::Game(int nin, int min, bool debug)
 
 void Game::start()
 {
-	int player, nin, min, time;
-	cin >> player >> nin >> min >> time;
-	cerr << "value of n is: " << nin << endl;
+	// initializing the game and its parameters
+	int player, nin, min, timein;
+	double time_left;
+	cin >> player >> nin >> min >> timein;
+	cerr << "n=" << nin << " m=" << min << endl;
+	n = nin;
+	m = min;
+	time_limit = timein;
+	time_left = time_limit;
+	Board newBoard(n, m);
+	board = newBoard;
 	int plays = 0;
 
 
@@ -57,7 +62,7 @@ void Game::start()
 		{
 			if(player == 1)	searchDepth = 5; else searchDepth = 4;
 		}
-		if((pieceCount.second <= 6 || pieceCount.first <= 6) && (pieceCount.first - pieceCount.second <= 4))// 5 earlier
+		if((pieceCount.second <= 5 || pieceCount.first <= 5) && (pieceCount.first - pieceCount.second <= 4))// 5 earlier
 		{
 			if(player == 1)	searchDepth = 5; else searchDepth = 6;
 		}
@@ -70,20 +75,29 @@ void Game::start()
 		{
 			char s, nature;
 			pair<int, int> src, tgt;
+			time_t start, end;
+
+			// checking for approaching timeout
+			if(time_left < 16)
+			{
+				searchDepth = 3;
+			}
 
 			//Making our move
-			// vector<Move> list = board.validMoves(true);			//List of all possible moves
-			
 			// cerr << "Searching for optimal move\n";
+			
+			time(&start);
 			pair<vector<Move>, int> optimalStep = maxValue(board, searchDepth, -100000, 100000, {});		//The optimal move from alpha-bta search
 			// cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
 
 			explainMoves(optimalStep.first, optimalStep.second, board);
 			makeMove(optimalStep.first[0], &board);		//Make the optimal move
-			cout << moveToString(optimalStep.first[0]) << endl;
+			cout << moveToString(optimalStep.first[0]) << endl;			
 			
 			board.printBoard();
-
+			time(&end);
+			
+			time_left -= double(end - start);
 
 			//Opponent is making the move now
 			cin >> s >> src.first >> src.second >> nature >> tgt.first >> tgt.second;
@@ -97,6 +111,13 @@ void Game::start()
 		{
 			char s, nature;
 			pair<int, int> src, tgt;
+			time_t start, end;
+
+			// checking for approaching timeout
+			if(time_left < 16 || (time_left < 45 && n==10 && m==10) )
+			{
+				if(searchDepth==4) searchDepth = 2; else searchDepth = 4;
+			}
 
 			//Opponent is making the move now
 			cin >> s >> src.first >> src.second >> nature >> tgt.first >> tgt.second;
@@ -106,10 +127,9 @@ void Game::start()
 			makeMove(move, &board);
 			board.printBoard();
 
-			//Making our move
-			// vector<Move> list = board.validMoves(false);			//List of all possible moves
-			
+			//Making our move			
 			// cerr << "Searching for optimal move\n";
+			time(&start);
 			pair<vector<Move>, int> optimalStep = minValue(board, searchDepth, -100000, 100000, {});		//The optimal move from alpha-bta search
 			// cerr << "Optimal --------------------------------- Value: " << optimalStep.second << " Move: " << moveToString(optimalStep.first) << endl;
 
@@ -118,7 +138,8 @@ void Game::start()
 			cout << moveToString(optimalStep.first[0]) << endl;
 			
 			board.printBoard();
-			
+			time(&end);
+			time_left -= double(end - start);
 		}
 		
 		plays++;

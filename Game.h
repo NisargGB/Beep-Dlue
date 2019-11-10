@@ -9,11 +9,11 @@ using namespace std;
 class Game
 {
 public:
-	int n, m;
+	int n, m, time_limit;
 	int searchDepth;
 	Board board;
 	void start();
-	Game(int nin, int min);
+	Game();
 	Game(int nin, int min, bool debug);
 	pair<bool, bool> makeMove(Move move, Board *boardIn);
 	string moveToString(Move move);

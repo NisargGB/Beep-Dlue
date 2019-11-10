@@ -12,6 +12,6 @@ int main()
 		dgame.start();
 		return 0;
 	#endif
-	Game game(10, 8);
+	Game game;
 	game.start();
 }
